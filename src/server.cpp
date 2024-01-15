@@ -10,7 +10,7 @@
 
 int main(void)
 {
-    int ServerFd, ClientFd; // 定义服务端和客户端的文件描述符
+    int ServerFd; // 定义服务端文件描述符
 
     struct sockaddr_in ServerSockAddr; // 定义服务端socket地址
     struct sockaddr ClientAddr;        // 定义客户端socket地址
@@ -19,7 +19,7 @@ int main(void)
     int optval = 1;
 
     /* 创建服务端文件描述符 */
-    if (-1 == (ServerFd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)))
+    if (-1 == (ServerFd = socket(AF_INET, SOCK_DGRAM, 0)))
     {
         printf("socket error!\n");
         exit(1);
@@ -46,38 +46,21 @@ int main(void)
         exit(1);
     }
 
-    /* 进入监听状态 */
-    if (-1 == (listen(ServerFd, 10))) // 10表示可以同时连接客户端的数量
-    {
-        printf("listen error!\n");
-        exit(1);
-    }
-
     addr_len = sizeof(struct sockaddr);
 
     while (1)
     {
-        /* 监听客户端请求，accept函数返回一个新的套接字，发送和接收都是用这个套接字 */
-        if (-1 == (ClientFd = accept(ServerFd, (struct sockaddr *)&ClientAddr, (socklen_t *)&addr_len)))
-        {
-            printf("accept error!\n");
-            exit(1);
-        }
-
         /* 接受客户端的返回数据 */
-        if ((recv_len = recv(ClientFd, Buf, BUF_LEN, 0)) < 0)
+        if ((recv_len = recvfrom(ServerFd, Buf, BUF_LEN, 0, (struct sockaddr *)&ClientAddr, (socklen_t *)&addr_len)) < 0)
         {
-            printf("recv error!\n");
+            printf("recvfrom error!\n");
             exit(1);
         }
 
         printf("客户端发送过来的数据为：%s\n", Buf);
 
         /* 发送数据到客户端 */
-        send(ClientFd, Buf, recv_len, 0);
-
-        /* 关闭客户端套接字 */
-        close(ClientFd);
+        sendto(ServerFd, Buf, recv_len, 0, (struct sockaddr *)&ClientAddr, addr_len);
 
         /* 清空缓冲区 */
         memset(Buf, 0, BUF_LEN);

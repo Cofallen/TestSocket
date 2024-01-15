@@ -24,7 +24,7 @@ int main(void)
     while (1)
     {
         /* 创建客户端socket */
-        if (-1 == (ClientFd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)))
+        if (-1 == (ClientFd = socket(AF_INET, SOCK_DGRAM, 0)))
         {
             printf("socket error!\n");
             exit(1);
